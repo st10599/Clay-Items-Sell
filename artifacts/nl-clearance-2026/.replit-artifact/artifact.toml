@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "2026 荷蘭出清"
+description = "一個從公開 Google Sheets CSV 即時同步商品資料的個人出清網站，支援響應式商品瀏覽、多圖燈箱、售出狀態篩選，以及 LINE 與 Facebook 聯絡操作。"
+version = "1.0.0"
+id = "artifacts/nl-clearance-2026"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24639
+
+[services.development]
+run = "pnpm --filter @workspace/nl-clearance-2026 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nl-clearance-2026", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nl-clearance-2026/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24639"
+BASE_PATH = "/"
