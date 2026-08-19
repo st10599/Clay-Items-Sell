@@ -24,6 +24,7 @@ type ItemStatus = 'available' | 'reserved' | 'sold';
 type Item = {
   id: string;
   name: string;
+  category: string;
   description: string;
   images: string[];
   price: string;
@@ -35,6 +36,7 @@ type ContactItem = Pick<Item, 'name' | 'price'>;
 
 const keyAliases = {
   name: ['物品名稱', '品名', '物品名', 'name', 'itemname', 'title'],
+  category: ['分類', '類別', '商品分類', 'category', 'type', 'cat'],
   description: ['說明', '描述', '商品說明', 'description', 'desc', 'details'],
   images: ['照片', '圖片', '照片網址', '圖片網址', 'imageurl', 'image_url', 'images', 'photo'],
   price: ['價格', '售價', 'price', 'cost'],
@@ -93,9 +95,11 @@ function parseItems(rows: Record<string, string>[]) {
       const name = valueFor(row, keyAliases.name);
       if (!name) return null;
       const rawStatus = valueFor(row, keyAliases.status);
+      const category = valueFor(row, keyAliases.category) || '其他';
       return {
         id: `${normalizeKey(name)}-${index}`,
         name,
+        category,
         description: valueFor(row, keyAliases.description) || '這件物品正在等待下一個好好使用它的人。',
         images: parseImages(valueFor(row, keyAliases.images)),
         price: formatPrice(valueFor(row, keyAliases.price)),
@@ -105,8 +109,6 @@ function parseItems(rows: Record<string, string>[]) {
     })
     .filter((item): item is Item => Boolean(item));
 
-  // The sheet can retain older status rows for the same item. Since the
-  // newest row is appended last, keep the last entry for each product name.
   return Array.from(
     items.reduce((latest, item) => latest.set(normalizeKey(item.name), item), new Map<string, Item>()).values(),
   );
@@ -137,8 +139,17 @@ function StatusBadge({ status }: { status: ItemStatus }) {
         ? 'bg-amber-500 text-[#422d1c]'
         : 'bg-rose-600 text-white';
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold tracking-[.08em] ${color}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-[.04em] ${color}`}>
       {label}
+    </span>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  if (!category || category === '其他') return null;
+  return (
+    <span className="inline-flex items-center rounded-full border border-[#d9c8b5] bg-[#fffdf9]/90 px-2.5 py-0.5 text-[11px] font-bold tracking-[.04em] text-[#75573b] backdrop-blur-sm">
+      {category}
     </span>
   );
 }
@@ -230,9 +241,11 @@ function ProductCard({
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-[#eee5d8]">
         <ImageFrame src={item.images[imageIndex]} alt={item.name} className="h-full w-full transition duration-500 group-hover:scale-[1.025]" />
-        <div className="absolute left-4 top-4">
+
+        <div className="absolute left-3 top-3 z-10">
           <StatusBadge status={item.status} />
         </div>
+
         {item.images.length > 1 && (
           <>
             <button
@@ -259,16 +272,20 @@ function ProductCard({
           </>
         )}
       </div>
+
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-start justify-between gap-3">
+        {/* 標題在第一行，價格換到下一行 */}
+        <div className="flex flex-col gap-1.5">
           <h2 className="font-serif text-[1.35rem] leading-tight text-[#5a422d]">{item.name}</h2>
-          <span className="shrink-0 font-serif text-lg font-semibold text-[#75573b]" data-testid={`text-price-${item.id}`}>
+          <span className="font-serif text-lg font-semibold text-[#75573b]" data-testid={`text-price-${item.id}`}>
             {item.price}
           </span>
         </div>
+
         <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#816f5d]" data-testid={`text-description-${item.id}`}>
           {item.description}
         </p>
+
         <div className="mt-auto border-t border-[#eee4d6] pt-4">
           <button
             type="button"
@@ -276,7 +293,7 @@ function ProductCard({
             className={`w-full rounded-full px-4 py-2.5 text-xs font-bold tracking-[.02em] transition ${sold ? 'cursor-not-allowed bg-[#e2ddd5] text-[#9a9187]' : 'bg-[#75573b] text-[#fffaf3] hover:bg-[#5a422d] hover:shadow-md'}`}
             onClick={(event) => {
               event.stopPropagation();
-               if (!sold) onContact(item);
+              if (!sold) onContact(item);
             }}
             data-testid={`button-contact-${item.id}`}
           >
@@ -313,6 +330,7 @@ function ModalShell({
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-[#2d2118]/65 p-0 backdrop-blur-[3px] sm:items-center sm:p-6"
@@ -323,7 +341,7 @@ function ModalShell({
       data-testid="modal-backdrop"
     >
       <section
-        className={`modal-enter relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[1.5rem] bg-[#fffdf9] shadow-2xl sm:max-w-3xl sm:rounded-[1.5rem] ${className}`}
+        className={`modal-enter relative h-[100dvh] max-h-[100dvh] w-full overflow-y-auto rounded-none bg-[#fffdf9] shadow-2xl sm:h-auto sm:max-h-[92dvh] sm:max-w-3xl sm:rounded-[1.5rem] ${className}`}
         role="dialog"
         aria-modal="true"
         aria-label={label}
@@ -333,7 +351,7 @@ function ModalShell({
           ref={closeRef}
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#f4ede2]/90 text-[#75573b] transition hover:bg-[#e8dccb]"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#f4ede2]/90 text-[#75573b] shadow-md transition hover:bg-[#e8dccb]"
           aria-label="關閉視窗"
           data-testid="button-close-modal"
         >
@@ -359,8 +377,8 @@ function DetailModal({
   return (
     <ModalShell label={`${item.name} 詳情`} onClose={onClose} className="sm:max-w-4xl">
       <div className="grid sm:grid-cols-[1.05fr_.95fr]">
-        <div className="relative min-h-[280px] bg-[#eee5d8] sm:min-h-[500px]">
-          <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[280px] w-full sm:min-h-[500px]" />
+        <div className="relative min-h-[300px] bg-[#eee5d8] sm:min-h-[500px]">
+          <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[300px] w-full sm:min-h-[500px]" />
           {item.images.length > 1 && (
             <>
               <button
@@ -389,16 +407,19 @@ function DetailModal({
         </div>
         <div className="flex flex-col p-6 sm:p-9">
           <div className="flex items-center justify-between gap-3 pr-10">
-            <StatusBadge status={item.status} />
+            <div className="flex items-center gap-2">
+              <StatusBadge status={item.status} />
+              <CategoryBadge category={item.category} />
+            </div>
             {item.images.length > 0 && <span className="text-[11px] font-semibold tracking-[.12em] text-[#a08d78]">DETAIL / {imageIndex + 1}</span>}
           </div>
-          <h2 className="mt-6 font-serif text-4xl leading-[1.05] text-[#5a422d] sm:text-5xl" data-testid={`modal-title-${item.id}`}>
+          <h2 className="mt-6 font-serif text-3xl leading-[1.1] text-[#5a422d] sm:text-5xl" data-testid={`modal-title-${item.id}`}>
             {item.name}
           </h2>
-          <p className="mt-5 font-serif text-3xl text-[#75573b]" data-testid={`modal-price-${item.id}`}>
+          <p className="mt-4 font-serif text-2xl text-[#75573b] sm:text-3xl" data-testid={`modal-price-${item.id}`}>
             {item.price}
           </p>
-          <div className="my-6 h-px bg-[#eadfce]" />
+          <div className="my-5 h-px bg-[#eadfce]" />
           <p className="whitespace-pre-line text-[15px] leading-7 text-[#735f4d]" data-testid={`modal-description-${item.id}`}>
             {item.description}
           </p>
@@ -471,7 +492,6 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             Facebook 聯絡 <ExternalLink size={14} />
           </a>
         </div>
-        <p className="mt-5 text-center text-xs text-[#a08d78]">LINE ID：crab880720</p>
       </div>
     </ModalShell>
   );
@@ -496,6 +516,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hideSold, setHideSold] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('全部');
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [contactItem, setContactItem] = useState<ContactItem | null>(null);
 
@@ -522,7 +543,24 @@ function App() {
     void loadItems();
   }, [loadItems]);
 
-  const visibleItems = useMemo(() => (hideSold ? items.filter((item) => item.status !== 'sold') : items), [hideSold, items]);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.category && item.category.trim()) {
+        set.add(item.category.trim());
+      }
+    });
+    return ['全部', ...Array.from(set)];
+  }, [items]);
+
+  const visibleItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSold = hideSold ? item.status !== 'sold' : true;
+      const matchesCategory = selectedCategory === '全部' ? true : item.category === selectedCategory;
+      return matchesSold && matchesCategory;
+    });
+  }, [hideSold, selectedCategory, items]);
+
   const counts = useMemo(
     () => ({
       total: items.length,
@@ -570,6 +608,26 @@ function App() {
               </button>
             </div>
           </div>
+
+          {categories.length > 1 && (
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#75573b] text-[#fffaf3]'
+                      : 'border border-[#eadfce] bg-[#fffdf9] text-[#735f4d] hover:border-[#d9c8b5]'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-[#947e68]" data-testid="text-list-summary">
             <span className="flex items-center gap-2"><Tag size={14} /> {counts.total} 件物品</span>
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-600" /> {counts.available} 件可預約</span>
