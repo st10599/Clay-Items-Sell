@@ -1,0 +1,1 @@
+- [Google Sheets status rows](google-sheets-status-rows.md) — duplicate product rows can preserve stale statuses; prefer the last row and match 未售出 before 售出.

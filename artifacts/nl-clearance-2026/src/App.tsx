@@ -3,7 +3,6 @@ import Papa from 'papaparse';
 import {
   ArrowLeft,
   ArrowRight,
-  CalendarDays,
   Check,
   CircleAlert,
   ClipboardCheck,
@@ -59,6 +58,7 @@ function valueFor(row: Record<string, string>, aliases: readonly string[]) {
 
 function parseStatus(value: string): ItemStatus {
   const normalized = value.toLocaleLowerCase().replace(/\s/g, '');
+  if (/未售出|未售|available|forsale|待售/.test(normalized)) return 'available';
   if (/已售出|售出|sold|soldout|已成交/.test(normalized)) return 'sold';
   if (/已預訂|已预订|預訂|预订|預約|预留|候補|候补|reserved|pending|hold/.test(normalized)) return 'reserved';
   return 'available';
@@ -82,7 +82,7 @@ function formatPrice(value: string) {
 }
 
 function parseItems(rows: Record<string, string>[]) {
-  return rows
+  const items = rows
     .map((row, index): Item | null => {
       const name = valueFor(row, keyAliases.name);
       if (!name) return null;
@@ -98,6 +98,12 @@ function parseItems(rows: Record<string, string>[]) {
       };
     })
     .filter((item): item is Item => Boolean(item));
+
+  // The sheet can retain older status rows for the same item. Since the
+  // newest row is appended last, keep the last entry for each product name.
+  return Array.from(
+    items.reduce((latest, item) => latest.set(normalizeKey(item.name), item), new Map<string, Item>()).values(),
+  );
 }
 
 async function copyText(text: string) {
@@ -487,7 +493,6 @@ function App() {
   const [hideSold, setHideSold] = useState(true);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [contactItem, setContactItem] = useState<ContactItem | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -500,7 +505,6 @@ function App() {
       const parsed = Papa.parse<Record<string, string>>(csvText, { header: true, skipEmptyLines: 'greedy' });
       if (parsed.errors.length > 0 && parsed.data.length === 0) throw new Error('CSV 格式似乎無法讀取');
       setItems(parseItems(parsed.data));
-      setLastUpdated(new Date());
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : '無法讀取出清清單');
       setItems([]);
@@ -534,16 +538,9 @@ function App() {
         <header className="page-enter">
           <div className="flex flex-col gap-6 border-b border-[#e3d5c4] pb-7 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="mb-5 flex items-center gap-3 text-[11px] font-bold tracking-[.2em] text-[#a07f5d]">
-                <span className="h-px w-8 bg-[#b08e67]" />
-                PERSONAL CLEARANCE / NL
-              </div>
               <h1 className="font-serif text-[clamp(2.8rem,7vw,5.8rem)] leading-[.92] tracking-[-.045em] text-[#5a422d]" data-testid="text-page-title">
                 2026 荷蘭出清
               </h1>
-              <p className="mt-5 max-w-xl text-[15px] leading-7 text-[#816f5d] sm:text-base">
-                搬家前，把還在好好生活的物件交給下一個需要它的人。每件物品都是真實照片、真實價格，歡迎帶著問題來聊聊。
-              </p>
             </div>
             <div className="flex shrink-0 flex-col items-start gap-3 sm:flex-row sm:items-center">
               <label className="flex cursor-pointer items-center gap-3 rounded-full border border-[#d9c8b5] bg-[#fffdf9]/70 px-4 py-2.5 text-sm text-[#735f4d]" data-testid="label-hide-sold">
@@ -572,7 +569,6 @@ function App() {
             <span className="flex items-center gap-2"><Tag size={14} /> {counts.total} 件物品</span>
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-600" /> {counts.available} 件可預約</span>
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /> {counts.reserved} 件候補中</span>
-            {lastUpdated && <span className="ml-auto flex items-center gap-2"><CalendarDays size={14} /> 更新於 {lastUpdated.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}</span>}
           </div>
         </header>
 
