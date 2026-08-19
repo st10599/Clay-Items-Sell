@@ -495,7 +495,7 @@ function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [hideSold, setHideSold] = useState(true);
+  const [hideSold, setHideSold] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [contactItem, setContactItem] = useState<ContactItem | null>(null);
 
