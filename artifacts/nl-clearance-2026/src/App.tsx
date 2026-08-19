@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   ExternalLink,
   ImageOff,
+  MapPin,
   MessageCircle,
   PackageOpen,
   RefreshCw,
@@ -274,7 +275,6 @@ function ProductCard({
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        {/* 標題在第一行，價格換到下一行 */}
         <div className="flex flex-col gap-1.5">
           <h2 className="font-serif text-[1.35rem] leading-tight text-[#5a422d]">{item.name}</h2>
           <span className="font-serif text-lg font-semibold text-[#75573b]" data-testid={`text-price-${item.id}`}>
@@ -443,7 +443,7 @@ function DetailModal({
 
 function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const defaultMessage = `您好，我想詢問「${item.name}」（${item.price}）。\n方便日期時間：\n交易地點：`;
+  const defaultMessage = `您好，我想詢問「${item.name}」（${item.price}）。\n面交地點：Eindhoven centraal station 或是 5614 AT\n方便日期時間：\n`;
 
   useEffect(() => {
     let cancelled = false;
@@ -462,7 +462,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
           <MessageCircle size={23} />
         </div>
         <p className="mt-6 text-xs font-bold tracking-[.16em] text-[#a08d78]">CONTACT / 聯絡</p>
-        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。</p>
+        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間。</p>
         <div className="mt-6 rounded-xl border border-[#e8dccb] bg-[#faf5ec] p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-[#75573b]">
             {copied ? <Check size={15} /> : <ClipboardCheck size={15} />}
@@ -581,9 +581,15 @@ function App() {
         <header className="page-enter">
           <div className="flex flex-col gap-6 border-b border-[#e3d5c4] pb-7 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="font-serif text-[clamp(2.8rem,7vw,5.8rem)] leading-[.92] tracking-[-.045em] text-[#5a422d]" data-testid="text-page-title">
+              {/* 首頁標題調整為 48pt (48px) */}
+              <h1 className="font-serif text-[48px] leading-[1.1] tracking-[-0.03em] text-[#5a422d]" data-testid="text-page-title">
                 2026 荷蘭出清
               </h1>
+              {/* 面交地點提示 */}
+              <p className="mt-2.5 flex items-center gap-1.5 text-sm font-medium text-[#8c745d]">
+                <MapPin size={16} className="text-[#75573b]" />
+                面交地點：Eindhoven centraal station 或是 5614 AT
+              </p>
             </div>
             <div className="flex shrink-0 flex-col items-start gap-3 sm:flex-row sm:items-center">
               <label className="flex cursor-pointer items-center gap-3 rounded-full border border-[#d9c8b5] bg-[#fffdf9]/70 px-4 py-2.5 text-sm text-[#735f4d]" data-testid="label-hide-sold">
