@@ -609,9 +609,6 @@ function App() {
           )}
         </section>
 
-        <footer className="mt-16 border-t border-[#e3d5c4] pt-6 text-xs leading-6 text-[#a08d78] sm:mt-24 sm:flex sm:items-center sm:justify-between">
-          <p className="mt-2 sm:mt-0">荷蘭面交 · 請先私訊確認物品狀態</p>
-        </footer>
       </div>
       {selectedItem && <DetailModal item={selectedItem} onClose={() => setSelectedItem(null)} onContact={openContact} />}
       {contactItem && <ContactModal item={contactItem} onClose={() => setContactItem(null)} />}
