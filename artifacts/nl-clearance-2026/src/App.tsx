@@ -459,7 +459,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             className="flex items-center justify-center gap-2 rounded-full bg-[#75573b] px-4 py-3 text-sm font-bold text-[#fffaf3] transition hover:bg-[#5a422d]"
             data-testid="link-open-line"
           >
-            💬 開啟 LINE 傳送訊息 <ExternalLink size={14} />
+            💬 LINE 聯絡 <ExternalLink size={14} />
           </a>
           <a
             href={FACEBOOK_URL}
@@ -468,7 +468,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             className="flex items-center justify-center gap-2 rounded-full border border-[#cdbba5] bg-[#fffdf9] px-4 py-3 text-sm font-bold text-[#75573b] transition hover:bg-[#f4ede2]"
             data-testid="link-open-facebook"
           >
-            📘 開啟 Facebook 傳送訊息 <ExternalLink size={14} />
+            📘 Facebook 聯絡 <ExternalLink size={14} />
           </a>
         </div>
         <p className="mt-5 text-center text-xs text-[#a08d78]">LINE ID：crab880720</p>
@@ -610,7 +610,6 @@ function App() {
         </section>
 
         <footer className="mt-16 border-t border-[#e3d5c4] pt-6 text-xs leading-6 text-[#a08d78] sm:mt-24 sm:flex sm:items-center sm:justify-between">
-          <p>一件一件整理，一個家一個家繼續。</p>
           <p className="mt-2 sm:mt-0">荷蘭面交 · 請先私訊確認物品狀態</p>
         </footer>
       </div>
