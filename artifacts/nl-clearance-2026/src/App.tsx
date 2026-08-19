@@ -441,7 +441,6 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
           <MessageCircle size={23} />
         </div>
         <p className="mt-6 text-xs font-bold tracking-[.16em] text-[#a08d78]">CONTACT / 聯絡</p>
-        <h2 className="mt-2 font-serif text-4xl leading-tight text-[#5a422d]">想把它帶回家？</h2>
         <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。</p>
         <div className="mt-6 rounded-xl border border-[#e8dccb] bg-[#faf5ec] p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-[#75573b]">
