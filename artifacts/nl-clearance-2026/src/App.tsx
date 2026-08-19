@@ -465,7 +465,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             href={FACEBOOK_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-full border border-[#cdbba5] px-4 py-3 text-sm font-bold transition hover:bg-[#f4ede2] border-t-[0px] border-r-[0px] border-b-[0px] border-l-[0px] bg-[1877F2] text-[FFFF]"
+            className="flex items-center justify-center gap-2 rounded-full border border-[#cdbba5] px-4 py-3 text-sm font-bold transition hover:bg-[#f4ede2] border-t-[0px] border-r-[0px] border-b-[0px] border-l-[0px] bg-[1877F2] text-[ffffff]"
             data-testid="link-open-facebook"
           >
             Facebook 聯絡 <ExternalLink size={14} />
