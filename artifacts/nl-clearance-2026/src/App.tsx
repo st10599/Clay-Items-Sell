@@ -66,12 +66,18 @@ function parseStatus(value: string): ItemStatus {
 
 function parseImages(value: string) {
   return value
+    .replace(/\]\s*\(/g, '\n')
     .split(/[\n,]+/)
     .map((image) => image.trim())
     .filter(Boolean)
     .map((image) => {
-      const driveMatch = image.match(/drive\.google\.com\/file\/d\/([^/]+)/i) ?? image.match(/file\/d\/([^/?]+)/i);
-      return driveMatch ? `https://lh3.googleusercontent.com/d/${driveMatch[1]}` : image;
+      const cleanedImage = image.replace(/^!?\[[^\]]*\]\(/, '').replace(/[)\]]+$/, '');
+      const driveFileMatch =
+        cleanedImage.match(/drive\.google\.com\/file\/d\/([^/?]+)/i) ??
+        cleanedImage.match(/file\/d\/([^/?]+)/i);
+      const driveQueryMatch = cleanedImage.match(/[?&]id=([^&)\]]+)/i);
+      const driveId = driveFileMatch?.[1] ?? driveQueryMatch?.[1];
+      return driveId ? `https://lh3.googleusercontent.com/d/${driveId}` : cleanedImage;
     });
 }
 
