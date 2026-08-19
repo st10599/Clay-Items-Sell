@@ -459,16 +459,16 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             className="flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-[#fffaf3] transition hover:bg-[#5a422d] bg-[#06C755]"
             data-testid="link-open-line"
           >
-            💬 LINE 聯絡 <ExternalLink size={14} />
+            LINE 聯絡 <ExternalLink size={14} />
           </a>
           <a
             href={FACEBOOK_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-full border border-[#cdbba5] px-4 py-3 text-sm font-bold text-[#75573b] transition hover:bg-[#f4ede2] border-t-[0px] border-r-[0px] border-b-[0px] border-l-[0px] bg-[1877F2]"
+            className="flex items-center justify-center gap-2 rounded-full border border-[#cdbba5] px-4 py-3 text-sm font-bold transition hover:bg-[#f4ede2] border-t-[0px] border-r-[0px] border-b-[0px] border-l-[0px] bg-[1877F2] text-[FFFF]"
             data-testid="link-open-facebook"
           >
-            📘 Facebook 聯絡 <ExternalLink size={14} />
+            Facebook 聯絡 <ExternalLink size={14} />
           </a>
         </div>
         <p className="mt-5 text-center text-xs text-[#a08d78]">LINE ID：crab880720</p>
