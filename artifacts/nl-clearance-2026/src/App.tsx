@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import {
   ArrowLeft,
   ArrowRight,
+  Calendar,
   Check,
   CircleAlert,
   ClipboardCheck,
@@ -107,7 +108,7 @@ function parseItems(rows: Record<string, string>[]) {
         id: `${normalizeKey(name)}-${index}`,
         name,
         category,
-        description: valueFor(row, keyAliases.description) || '這件物品正在等待下一個好好使用它的人。',
+        description: valueFor(row, keyAliases.description) || '無特別敘述',
         images: parseImages(valueFor(row, keyAliases.images)),
         price: formatPrice(valueFor(row, keyAliases.price)),
         status: parseStatus(rawStatus),
@@ -226,6 +227,7 @@ function ProductCard({
 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const sold = item.status === 'sold';
+  const hasImages = item.images.length > 0;
   const buttonText =
     item.status === 'available' ? '🤝 我想購買 / 預約面交' : item.status === 'reserved' ? '🙋 我想排（候補預約）' : '已售出';
 
@@ -246,41 +248,49 @@ function ProductCard({
       role="button"
       aria-label={`查看 ${item.name} 詳情`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#eee5d8]">
-        <ImageFrame src={item.images[imageIndex]} alt={item.name} className="h-full w-full transition duration-500 group-hover:scale-[1.025]" />
+      {hasImages && (
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#eee5d8]">
+          <ImageFrame src={item.images[imageIndex]} alt={item.name} className="h-full w-full transition duration-500 group-hover:scale-[1.025]" />
 
-        <div className="absolute left-3 top-3 z-10">
-          <StatusBadge status={item.status} />
+          <div className="absolute left-3 top-3 z-10">
+            <StatusBadge status={item.status} />
+          </div>
+
+          {item.images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
+                onClick={(event) => moveImage(event, -1)}
+                aria-label="上一張照片"
+                data-testid={`button-prev-image-${item.id}`}
+              >
+                <ArrowLeft size={17} />
+              </button>
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
+                onClick={(event) => moveImage(event, 1)}
+                aria-label="下一張照片"
+                data-testid={`button-next-image-${item.id}`}
+              >
+                <ArrowRight size={17} />
+              </button>
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white" data-testid={`text-image-count-${item.id}`}>
+                {imageIndex + 1} / {item.images.length}
+              </span>
+            </>
+          )}
         </div>
-
-        {item.images.length > 1 && (
-          <>
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
-              onClick={(event) => moveImage(event, -1)}
-              aria-label="上一張照片"
-              data-testid={`button-prev-image-${item.id}`}
-            >
-              <ArrowLeft size={17} />
-            </button>
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
-              onClick={(event) => moveImage(event, 1)}
-              aria-label="下一張照片"
-              data-testid={`button-next-image-${item.id}`}
-            >
-              <ArrowRight size={17} />
-            </button>
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white" data-testid={`text-image-count-${item.id}`}>
-              {imageIndex + 1} / {item.images.length}
-            </span>
-          </>
-        )}
-      </div>
+      )}
 
       <div className="flex flex-1 flex-col p-5">
+        {!hasImages && (
+          <div className="mb-3">
+            <StatusBadge status={item.status} />
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5">
           <h2 className="font-serif text-[1.35rem] leading-tight text-[#5a422d]">{item.name}</h2>
           <span className="font-serif text-lg font-semibold text-[#75573b]" data-testid={`text-price-${item.id}`}>
@@ -316,7 +326,7 @@ function ModalShell({
   onClose,
   children,
   className = '',
-  fullScreenMobile = true, // 控制手機版是否佔滿全螢幕
+  fullScreenMobile = true,
 }: {
   label: string;
   onClose: () => void;
@@ -377,7 +387,6 @@ function ModalShell({
   );
 }
 
-// 商品詳情彈窗：手機版維持全螢幕 (fullScreenMobile 預設為 true)
 function DetailModal({
   item,
   onClose,
@@ -389,44 +398,53 @@ function DetailModal({
 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const sold = item.status === 'sold';
+  const hasImages = item.images.length > 0;
+
   return (
-    <ModalShell label={`${item.name} 詳情`} onClose={onClose} className="sm:max-w-4xl">
-      <div className="grid sm:grid-cols-[1.05fr_.95fr]">
-        <div className="relative min-h-[300px] bg-[#eee5d8] sm:min-h-[500px]">
-          <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[300px] w-full sm:min-h-[500px]" />
-          {item.images.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
-                onClick={() => setImageIndex((current) => (current - 1 + item.images.length) % item.images.length)}
-                aria-label="上一張高解析照片"
-                data-testid="button-modal-prev-image"
-              >
-                <ArrowLeft size={19} />
-              </button>
-              <button
-                type="button"
-                className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
-                onClick={() => setImageIndex((current) => (current + 1) % item.images.length)}
-                aria-label="下一張高解析照片"
-                data-testid="button-modal-next-image"
-              >
-                <ArrowRight size={19} />
-              </button>
-              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
-                {imageIndex + 1} / {item.images.length}
-              </span>
-            </>
-          )}
-        </div>
+    <ModalShell
+      label={`${item.name} 詳情`}
+      onClose={onClose}
+      className={hasImages ? 'sm:max-w-4xl' : 'sm:max-w-xl'}
+      fullScreenMobile={hasImages}
+    >
+      <div className={hasImages ? 'grid sm:grid-cols-[1.05fr_.95fr]' : 'flex flex-col'}>
+        {hasImages && (
+          <div className="relative min-h-[300px] bg-[#eee5d8] sm:min-h-[500px]">
+            <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[300px] w-full sm:min-h-[500px]" />
+            {item.images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
+                  onClick={() => setImageIndex((current) => (current - 1 + item.images.length) % item.images.length)}
+                  aria-label="上一張高解析照片"
+                  data-testid="button-modal-prev-image"
+                >
+                  <ArrowLeft size={19} />
+                </button>
+                <button
+                  type="button"
+                  className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
+                  onClick={() => setImageIndex((current) => (current + 1) % item.images.length)}
+                  aria-label="下一張高解析照片"
+                  data-testid="button-modal-next-image"
+                >
+                  <ArrowRight size={19} />
+                </button>
+                <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
+                  {imageIndex + 1} / {item.images.length}
+                </span>
+              </>
+            )}
+          </div>
+        )}
         <div className="flex flex-col p-6 sm:p-9">
           <div className="flex items-center justify-between gap-3 pr-10">
             <div className="flex items-center gap-2">
               <StatusBadge status={item.status} />
               <CategoryBadge category={item.category} />
             </div>
-            {item.images.length > 0 && <span className="text-[11px] font-semibold tracking-[.12em] text-[#a08d78]">DETAIL / {imageIndex + 1}</span>}
+            {hasImages && <span className="text-[11px] font-semibold tracking-[.12em] text-[#a08d78]">DETAIL / {imageIndex + 1}</span>}
           </div>
           <h2 className="mt-6 font-serif text-3xl leading-[1.1] text-[#5a422d] sm:text-5xl" data-testid={`modal-title-${item.id}`}>
             {item.name}
@@ -434,10 +452,12 @@ function DetailModal({
           <p className="mt-4 font-serif text-2xl text-[#75573b] sm:text-3xl" data-testid={`modal-price-${item.id}`}>
             {item.price}
           </p>
+
           <div className="my-5 h-px bg-[#eadfce]" />
           <p className="whitespace-pre-line text-[15px] leading-7 text-[#735f4d]" data-testid={`modal-description-${item.id}`}>
             {item.description}
           </p>
+
           <div className="mt-auto pt-8">
             <button
               type="button"
@@ -456,7 +476,6 @@ function DetailModal({
   );
 }
 
-// 購買/候補聯絡彈窗：手機版設為 fullScreenMobile={false}，保持一般彈窗卡片型態
 function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
 
@@ -482,7 +501,26 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
           <MessageCircle size={23} />
         </div>
         <p className="mt-6 text-xs font-bold tracking-[.16em] text-[#a08d78]">CONTACT / 聯絡</p>
-        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。</p>
+
+        {/* 移至最上方的說明文字 */}
+        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">
+          請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。
+        </p>
+
+        {/* 地點與時間提示區塊 */}
+        <div className="mt-4 rounded-xl border border-[#e8dccb] p-3.5 text-xs text-[#75573b] space-y-1.5 bg-[#faf5ec]">
+          <div className="flex items-start gap-2">
+            <MapPin size={15} className="mt-0.5 shrink-0 text-[#b08e67]" />
+            <span>面交地點：Eindhoven Centraal Station 或是 5641 AT</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <Calendar size={15} className="mt-0.5 shrink-0 text-[#b08e67]" />
+            <span>
+              面交時間：9/21 - 10/1（<span className="font-semibold text-rose-700">9/27 無法</span>）
+            </span>
+          </div>
+        </div>
+
         <div className="mt-6 rounded-xl border border-[#e8dccb] bg-[#faf5ec] p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-[#75573b]">
             {copied ? <Check size={15} /> : <ClipboardCheck size={15} />}
@@ -492,6 +530,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             {defaultMessage}
           </p>
         </div>
+
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <a
             href={LINE_URL}
@@ -604,9 +643,18 @@ function App() {
               <h1 className="font-serif text-3xl sm:text-[48pt] leading-[1.1] tracking-[-0.03em] text-[#5a422d]" data-testid="text-page-title">
                 2026 荷蘭出清
               </h1>
-              <div className="mt-3 flex items-start gap-2 text-sm font-medium text-[#75573b]">
-                <MapPin size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
-                <span className="leading-snug">面交地點：Eindhoven Centraal Station 或是 5641 AT</span>
+
+              <div className="mt-3.5 space-y-1.5">
+                <div className="flex items-start gap-2 text-sm font-medium text-[#75573b]">
+                  <MapPin size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
+                  <span className="leading-snug">面交地點：Eindhoven Centraal Station 或是 5641 AT</span>
+                </div>
+                <div className="flex items-start gap-2 text-sm font-medium text-[#75573b]">
+                  <Calendar size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
+                  <span className="leading-snug">
+                    面交時間：9/21 - 10/1（<span className="font-semibold text-rose-700">9/27 無法</span>）
+                  </span>
+                </div>
               </div>
             </div>
 
