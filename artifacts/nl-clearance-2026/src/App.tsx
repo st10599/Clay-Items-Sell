@@ -33,7 +33,7 @@ type Item = {
   rawStatus: string;
 };
 
-type ContactItem = Pick<Item, 'name' | 'price'>;
+type ContactItem = Pick<Item, 'name' | 'price' | 'status'>;
 
 const keyAliases = {
   name: ['物品名稱', '品名', '物品名', 'name', 'itemname', 'title'],
@@ -87,6 +87,12 @@ function parseImages(value: string) {
 function formatPrice(value: string) {
   const clean = value.trim();
   if (!clean) return '價格請私訊';
+
+  const numericValue = parseFloat(clean.replace(/[^\d.-]/g, ''));
+  if (numericValue === 0 || /^0+(\.0+)?$/.test(clean) || /^(free|免費|0\s*€|€\s*0)$/i.test(clean)) {
+    return 'Free';
+  }
+
   return /€|eur/i.test(clean) ? clean : `€${clean}`;
 }
 
@@ -310,11 +316,13 @@ function ModalShell({
   onClose,
   children,
   className = '',
+  fullScreenMobile = true, // 控制手機版是否佔滿全螢幕
 }: {
   label: string;
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  fullScreenMobile?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -333,7 +341,9 @@ function ModalShell({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-[#2d2118]/65 p-0 backdrop-blur-[3px] sm:items-center sm:p-6"
+      className={`fixed inset-0 z-40 flex justify-center bg-[#2d2118]/65 backdrop-blur-[3px] sm:items-center sm:p-6 ${
+        fullScreenMobile ? 'items-end p-0' : 'items-center p-4'
+      }`}
       role="presentation"
       onMouseDown={(event) => {
         if (event.currentTarget === event.target) onClose();
@@ -341,7 +351,11 @@ function ModalShell({
       data-testid="modal-backdrop"
     >
       <section
-        className={`modal-enter relative h-[100dvh] max-h-[100dvh] w-full overflow-y-auto rounded-none bg-[#fffdf9] shadow-2xl sm:h-auto sm:max-h-[92dvh] sm:max-w-3xl sm:rounded-[1.5rem] ${className}`}
+        className={`modal-enter relative w-full overflow-y-auto bg-[#fffdf9] shadow-2xl sm:h-auto sm:max-h-[92dvh] sm:max-w-3xl sm:rounded-[1.5rem] ${
+          fullScreenMobile
+            ? 'h-[100dvh] max-h-[100dvh] rounded-none'
+            : 'max-h-[90dvh] rounded-[1.5rem]'
+        } ${className}`}
         role="dialog"
         aria-modal="true"
         aria-label={label}
@@ -363,6 +377,7 @@ function ModalShell({
   );
 }
 
+// 商品詳情彈窗：手機版維持全螢幕 (fullScreenMobile 預設為 true)
 function DetailModal({
   item,
   onClose,
@@ -441,9 +456,14 @@ function DetailModal({
   );
 }
 
+// 購買/候補聯絡彈窗：手機版設為 fullScreenMobile={false}，保持一般彈窗卡片型態
 function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const defaultMessage = `您好，我想詢問「${item.name}」（${item.price}）。\n面交地點：Eindhoven centraal station 或是 5614 AT\n方便日期時間：\n`;
+
+  const defaultMessage =
+    item.status === 'reserved'
+      ? `您好，我想候補 ${item.name}（價格：${item.price}）\n面交地點選擇：\n方便日期時間：`
+      : `您好，我想購買 ${item.name}（價格：${item.price}）\n面交地點選擇：\n方便日期時間：`;
 
   useEffect(() => {
     let cancelled = false;
@@ -456,13 +476,13 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
   }, [defaultMessage]);
 
   return (
-    <ModalShell label="聯絡賣家" onClose={onClose} className="sm:max-w-lg">
+    <ModalShell label="聯絡賣家" onClose={onClose} fullScreenMobile={false} className="sm:max-w-lg">
       <div className="p-7 sm:p-9">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e8eee5] text-[#3d7651]">
           <MessageCircle size={23} />
         </div>
         <p className="mt-6 text-xs font-bold tracking-[.16em] text-[#a08d78]">CONTACT / 聯絡</p>
-        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間。</p>
+        <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。</p>
         <div className="mt-6 rounded-xl border border-[#e8dccb] bg-[#faf5ec] p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-[#75573b]">
             {copied ? <Check size={15} /> : <ClipboardCheck size={15} />}
@@ -477,7 +497,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             href={LINE_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-sm font-bold text-white"
+            className="flex items-center justify-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-sm font-bold text-white transition hover:brightness-105"
             data-testid="link-open-line"
           >
             LINE 聯絡 <ExternalLink size={14} />
@@ -486,7 +506,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
             href={FACEBOOK_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 rounded-full bg-[#1877F2] px-4 py-3 text-sm font-bold text-white"
+            className="flex items-center justify-center gap-2 rounded-full bg-[#1877F2] px-4 py-3 text-sm font-bold text-white transition hover:brightness-105"
             data-testid="link-open-facebook"
           >
             Facebook 聯絡 <ExternalLink size={14} />
@@ -581,16 +601,15 @@ function App() {
         <header className="page-enter">
           <div className="flex flex-col gap-6 border-b border-[#e3d5c4] pb-7 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              {/* 首頁標題調整為 48pt (48px) */}
-              <h1 className="font-serif text-[48px] leading-[1.1] tracking-[-0.03em] text-[#5a422d]" data-testid="text-page-title">
+              <h1 className="font-serif text-3xl sm:text-[48pt] leading-[1.1] tracking-[-0.03em] text-[#5a422d]" data-testid="text-page-title">
                 2026 荷蘭出清
               </h1>
-              {/* 面交地點提示 */}
-              <p className="mt-2.5 flex items-center gap-1.5 text-sm font-medium text-[#8c745d]">
-                <MapPin size={16} className="text-[#75573b]" />
-                面交地點：Eindhoven centraal station 或是 5614 AT
-              </p>
+              <div className="mt-3 flex items-start gap-2 text-sm font-medium text-[#75573b]">
+                <MapPin size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
+                <span className="leading-snug">面交地點：Eindhoven Centraal Station 或是 5641 AT</span>
+              </div>
             </div>
+
             <div className="flex shrink-0 flex-col items-start gap-3 sm:flex-row sm:items-center">
               <label className="flex cursor-pointer items-center gap-3 rounded-full border border-[#d9c8b5] bg-[#fffdf9]/70 px-4 py-2.5 text-sm text-[#735f4d]" data-testid="label-hide-sold">
                 <input
