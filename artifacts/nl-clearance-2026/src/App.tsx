@@ -227,7 +227,6 @@ function ProductCard({
 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const sold = item.status === 'sold';
-  const hasImages = item.images.length > 0;
   const buttonText =
     item.status === 'available' ? '🤝 我想購買 / 預約面交' : item.status === 'reserved' ? '🙋 我想排（候補預約）' : '已售出';
 
@@ -238,7 +237,7 @@ function ProductCard({
 
   return (
     <article
-      className={`group flex cursor-pointer flex-col overflow-hidden rounded-[1.2rem] border border-[#e8dccb] bg-[#fffdf9] shadow-[0_12px_35px_rgba(90,66,45,.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(90,66,45,.13)] ${sold ? 'grayscale opacity-60' : ''}`}
+      className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.2rem] border border-[#e8dccb] bg-[#fffdf9] shadow-[0_12px_35px_rgba(90,66,45,.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(90,66,45,.13)] ${sold ? 'grayscale opacity-60' : ''}`}
       onClick={() => onOpen(item)}
       data-testid={`card-product-${item.id}`}
       tabIndex={0}
@@ -248,49 +247,46 @@ function ProductCard({
       role="button"
       aria-label={`查看 ${item.name} 詳情`}
     >
-      {hasImages && (
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#eee5d8]">
-          <ImageFrame src={item.images[imageIndex]} alt={item.name} className="h-full w-full transition duration-500 group-hover:scale-[1.025]" />
+      {/* 所有卡片固定保留 4:3 區域，無圖自動渲染 ImageFrame 的「尚未提供照片」佔位方塊 */}
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-[#eee5d8]">
+        <ImageFrame
+          src={item.images[imageIndex]}
+          alt={item.name}
+          className="h-full w-full transition duration-500 group-hover:scale-[1.025]"
+        />
 
-          <div className="absolute left-3 top-3 z-10">
-            <StatusBadge status={item.status} />
-          </div>
-
-          {item.images.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
-                onClick={(event) => moveImage(event, -1)}
-                aria-label="上一張照片"
-                data-testid={`button-prev-image-${item.id}`}
-              >
-                <ArrowLeft size={17} />
-              </button>
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
-                onClick={(event) => moveImage(event, 1)}
-                aria-label="下一張照片"
-                data-testid={`button-next-image-${item.id}`}
-              >
-                <ArrowRight size={17} />
-              </button>
-              <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white" data-testid={`text-image-count-${item.id}`}>
-                {imageIndex + 1} / {item.images.length}
-              </span>
-            </>
-          )}
+        <div className="absolute left-3 top-3 z-10">
+          <StatusBadge status={item.status} />
         </div>
-      )}
+
+        {item.images.length > 1 && (
+          <>
+            <button
+              type="button"
+              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
+              onClick={(event) => moveImage(event, -1)}
+              aria-label="上一張照片"
+              data-testid={`button-prev-image-${item.id}`}
+            >
+              <ArrowLeft size={17} />
+            </button>
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black/95"
+              onClick={(event) => moveImage(event, 1)}
+              aria-label="下一張照片"
+              data-testid={`button-next-image-${item.id}`}
+            >
+              <ArrowRight size={17} />
+            </button>
+            <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white" data-testid={`text-image-count-${item.id}`}>
+              {imageIndex + 1} / {item.images.length}
+            </span>
+          </>
+        )}
+      </div>
 
       <div className="flex flex-1 flex-col p-5">
-        {!hasImages && (
-          <div className="mb-3">
-            <StatusBadge status={item.status} />
-          </div>
-        )}
-
         <div className="flex flex-col gap-1.5">
           <h2 className="font-serif text-[1.35rem] leading-tight text-[#5a422d]">{item.name}</h2>
           <span className="font-serif text-lg font-semibold text-[#75573b]" data-testid={`text-price-${item.id}`}>
@@ -398,53 +394,45 @@ function DetailModal({
 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const sold = item.status === 'sold';
-  const hasImages = item.images.length > 0;
 
   return (
-    <ModalShell
-      label={`${item.name} 詳情`}
-      onClose={onClose}
-      className={hasImages ? 'sm:max-w-4xl' : 'sm:max-w-xl'}
-      fullScreenMobile={hasImages}
-    >
-      <div className={hasImages ? 'grid sm:grid-cols-[1.05fr_.95fr]' : 'flex flex-col'}>
-        {hasImages && (
-          <div className="relative min-h-[300px] bg-[#eee5d8] sm:min-h-[500px]">
-            <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[300px] w-full sm:min-h-[500px]" />
-            {item.images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
-                  onClick={() => setImageIndex((current) => (current - 1 + item.images.length) % item.images.length)}
-                  aria-label="上一張高解析照片"
-                  data-testid="button-modal-prev-image"
-                >
-                  <ArrowLeft size={19} />
-                </button>
-                <button
-                  type="button"
-                  className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
-                  onClick={() => setImageIndex((current) => (current + 1) % item.images.length)}
-                  aria-label="下一張高解析照片"
-                  data-testid="button-modal-next-image"
-                >
-                  <ArrowRight size={19} />
-                </button>
-                <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
-                  {imageIndex + 1} / {item.images.length}
-                </span>
-              </>
-            )}
-          </div>
-        )}
+    <ModalShell label={`${item.name} 詳情`} onClose={onClose} className="sm:max-w-4xl">
+      <div className="grid sm:grid-cols-[1.05fr_.95fr]">
+        <div className="relative min-h-[300px] bg-[#eee5d8] sm:min-h-[500px]">
+          <ImageFrame src={item.images[imageIndex]} alt={item.name} loading="eager" className="h-full min-h-[300px] w-full sm:min-h-[500px]" />
+          {item.images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
+                onClick={() => setImageIndex((current) => (current - 1 + item.images.length) % item.images.length)}
+                aria-label="上一張高解析照片"
+                data-testid="button-modal-prev-image"
+              >
+                <ArrowLeft size={19} />
+              </button>
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black/95"
+                onClick={() => setImageIndex((current) => (current + 1) % item.images.length)}
+                aria-label="下一張高解析照片"
+                data-testid="button-modal-next-image"
+              >
+                <ArrowRight size={19} />
+              </button>
+              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
+                {imageIndex + 1} / {item.images.length}
+              </span>
+            </>
+          )}
+        </div>
         <div className="flex flex-col p-6 sm:p-9">
           <div className="flex items-center justify-between gap-3 pr-10">
             <div className="flex items-center gap-2">
               <StatusBadge status={item.status} />
               <CategoryBadge category={item.category} />
             </div>
-            {hasImages && <span className="text-[11px] font-semibold tracking-[.12em] text-[#a08d78]">DETAIL / {imageIndex + 1}</span>}
+            {item.images.length > 0 && <span className="text-[11px] font-semibold tracking-[.12em] text-[#a08d78]">DETAIL / {imageIndex + 1}</span>}
           </div>
           <h2 className="mt-6 font-serif text-3xl leading-[1.1] text-[#5a422d] sm:text-5xl" data-testid={`modal-title-${item.id}`}>
             {item.name}
@@ -502,13 +490,12 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
         </div>
         <p className="mt-6 text-xs font-bold tracking-[.16em] text-[#a08d78]">CONTACT / 聯絡</p>
 
-        {/* 移至最上方的說明文字 */}
         <p className="mt-4 text-[15px] leading-7 text-[#735f4d]">
           請選擇透過 LINE 或 Facebook 私訊我，並告知您方便的日期時間與地點。
         </p>
 
-        {/* 地點與時間提示區塊 */}
-        <div className="mt-4 rounded-xl border border-[#e8dccb] p-3.5 text-xs text-[#75573b] space-y-1.5 bg-[#faf5ec]">
+        {/* 面交地點與時間方塊 */}
+        <div className="mt-4 rounded-xl border border-[#e8dccb] bg-[#f5ede3] p-3.5 text-xs text-[#75573b] space-y-1.5">
           <div className="flex items-start gap-2">
             <MapPin size={15} className="mt-0.5 shrink-0 text-[#b08e67]" />
             <span>面交地點：Eindhoven Centraal Station 或是 5641 AT</span>
@@ -644,6 +631,7 @@ function App() {
                 2026 荷蘭出清
               </h1>
 
+              {/* 地點與時間 */}
               <div className="mt-3.5 space-y-1.5">
                 <div className="flex items-start gap-2 text-sm font-medium text-[#75573b]">
                   <MapPin size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
@@ -732,7 +720,7 @@ function App() {
           {!loading && !error && visibleItems.length > 0 && (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-testid="product-grid">
               {visibleItems.map((item, index) => (
-                <div key={item.id} className="page-enter" style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}>
+                <div key={item.id} className="page-enter h-full" style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}>
                   <ProductCard item={item} onOpen={setSelectedItem} onContact={openContact} />
                 </div>
               ))}
