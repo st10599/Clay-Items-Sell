@@ -503,7 +503,7 @@ function ContactModal({ item, onClose }: { item: ContactItem; onClose: () => voi
           <div className="flex items-start gap-2">
             <Calendar size={15} className="mt-0.5 shrink-0 text-[#b08e67]" />
             <span>
-              面交時間：9/21 - 10/1（<span className="font-semibold text-rose-700">9/27 無法</span>）
+              面交時間：9/21 起（<span className="font-semibold text-rose-700">9/27, 10/2-4 無法</span>）
             </span>
           </div>
         </div>
@@ -640,7 +640,7 @@ function App() {
                 <div className="flex items-start gap-2 text-sm font-medium text-[#75573b]">
                   <Calendar size={16} className="mt-0.5 shrink-0 text-[#b08e67]" />
                   <span className="leading-snug">
-                    面交時間：9/21 - 10/1（<span className="font-semibold text-rose-700">9/27 無法</span>）
+                    面交時間：9/21 起（<span className="font-semibold text-rose-700">9/27, 10/2-4 無法</span>）
                   </span>
                 </div>
               </div>
