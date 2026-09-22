@@ -23,6 +23,11 @@ const LINE_URL = 'https://line.me/R/ti/p/~crab880720';
 const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=100003494572990';
 
 type ItemStatus = 'available' | 'reserved' | 'sold';
+const STATUS_ORDER: Record<ItemStatus, number> = {
+  available: 0,
+  reserved: 1,
+  sold: 2,
+};
 type Item = {
   id: string;
   name: string;
@@ -117,9 +122,11 @@ function parseItems(rows: Record<string, string>[]) {
     })
     .filter((item): item is Item => Boolean(item));
 
-  return Array.from(
+  const uniqueItems = Array.from(
     items.reduce((latest, item) => latest.set(normalizeKey(item.name), item), new Map<string, Item>()).values(),
   );
+
+  return uniqueItems.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
 }
 
 async function copyText(text: string) {
@@ -600,11 +607,13 @@ function App() {
   }, [items]);
 
   const visibleItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesSold = hideSold ? item.status !== 'sold' : true;
-      const matchesCategory = selectedCategory === '全部' ? true : item.category === selectedCategory;
-      return matchesSold && matchesCategory;
-    });
+    return items
+      .filter((item) => {
+        const matchesSold = hideSold ? item.status !== 'sold' : true;
+        const matchesCategory = selectedCategory === '全部' ? true : item.category === selectedCategory;
+        return matchesSold && matchesCategory;
+      })
+      .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
   }, [hideSold, selectedCategory, items]);
 
   const counts = useMemo(
